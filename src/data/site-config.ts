@@ -106,7 +106,7 @@ const siteConfig: SiteConfig = {
         },
         {
             text: 'Follow on Linkedin',
-            href: 'https://linkedin.com/rimthong',
+            href: 'https://linkedin.com/in/rimthong',
             icon: 'linkedin'
         },
         {
