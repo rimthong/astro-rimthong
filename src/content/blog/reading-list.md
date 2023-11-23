@@ -15,7 +15,7 @@ I often get asked what are my favourite books for software, management, leadersh
 
 This endeavour turned out to be a lot more time consuming than expected, so consider this a work in progress: I'll try to update this list from time to time and add more lessons learned.
 
-Last update: Nov 14 2023
+**Last update:** Nov 14 2023, I just added a few of the books I have read since my last update last year. Bear with me as I write small summaries and key learnings I have gotten from those books.
 
 ## Leadership Strategy and Tactics: A field manual
 
