@@ -13,7 +13,7 @@ seo:
 
 # Exploring the Potential of Custom GPTs: A Journey into AI Customization
 
-The advent of custom GPTs, as announced at OpenAI's latest developer event, has sparked a wave of enthusiasm among tech geeks. Intrigued by this that trend, I decided to take this new feature for a spin. This exploration aimed to answer several questions: Could custom GPTs transcend the limitations of pre-set chat prompts? Is it feasible to equip them with specialized knowledge sources? And importantly, how do these customizations enhance user experience and the accuracy of the AI's responses?
+The advent of custom GPTs, as announced at OpenAI's latest developer event, has sparked a wave of enthusiasm among tech geeks. Intrigued by this new trend, I decided to take this new feature for a spin. This exploration aimed to answer several questions: Could custom GPTs transcend the limitations of pre-set chat prompts? Is it feasible to equip them with specialized knowledge sources? And importantly, how do these customizations enhance user experience and the accuracy of the AI's responses?
 
 ## Experiment 1: Pole Instructor AI
 
