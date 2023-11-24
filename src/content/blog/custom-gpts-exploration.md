@@ -1,7 +1,7 @@
 ---
 title: Exploring Custom GPTs
-excerpt: With the release of custom GPTs...
-publishDate: 'Nov 23 2023'
+excerpt: Join us on an intriguing exploration into the diverse applications of custom GPTs. From a virtual pole fitness coach to a condo concierge, and even a sassy chef assistant, we're testing the limits and learning the quirks of AI in real-life scenarios. Discover the successes, the hiccups, and the surprising lessons learned along the way.
+publishDate: 'Nov 24 2023'
 featureImage:
   src: '/custom_gpt.webp'
   alt: Exploring Custom GPTs

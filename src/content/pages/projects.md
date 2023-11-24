@@ -24,6 +24,8 @@ Exploring the limits of GPT models, I'm developing custom prototypes for various
 - **Fitness Scientist**: A brainstorming partner for optimizing training regimens.
 - **Engineering Mentor**: Leveraging my engineering knowledge to create an AI mentor for engineering managers.
 
+Want to know more? Check out the [blog post](/blog/custom-gpts-exploration/).
+
 **Tech Stack**: GPT-based models
 
 ## The Plan App
