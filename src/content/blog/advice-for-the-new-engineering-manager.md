@@ -1,5 +1,5 @@
 ---
-title: Advice for the New Engineering Managers
+title: Advice for New Engineering Managers - Leading with Empathy
 excerpt: A guide for new managers, offering insights into leading engineering teams with empathy and kindness. It focuses on understanding the unique challenges and opportunities of transitioning from an engineering role to a management position, while emphasizing the importance of building strong, trust-based relationships with your team members.
 publishDate: 'Dec 1 2023'
 featureImage:
