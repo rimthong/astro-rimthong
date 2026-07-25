@@ -10,9 +10,18 @@ seo:
     src: '/post-3.jpg'
 ---
 
-# How can I help?
+# How Rimcorp can help
 
-With extensive experience in the technology sector, I have collaborated with both established institutions and dynamic startups. My expertise spans a diverse range of areas, including developing Minimum Viable Products (MVPs), coaching high-performance teams, and guiding Series A startups through SOC-2 preparation. It would be my privilege to extend my knowledge and skills to support your endeavors. Feel free to connect with me via [email](mailto:rimthong@gmail.com?subject=Consult), on [LinkedIn](https://linkedin.com/in/rimthong), or schedule a complimentary [introductory consultation](https://calendly.com/arimthong/30min) to explore how I can assist you.
+**Rimcorp** is my consulting practice — I accompany companies in leveraging AI to level up their engineering. Drawing on 25 years in the field (IC to leadership), I help teams adopt AI where it actually compounds: agentic workflows, engineering observability, and ops automation, shaped around your stack, your team, and your tolerance for risk.
+
+A few productized recipes from the broader portfolio — each one turns a recurring manual sweep into a one-command digest, with the team's noise-filtering rules baked in:
+
+- **Cost & AI spend attribution** — where the money goes, validated to source-of-truth billing.
+- **Security posture digest** — your security state in one report, false-positive playbook included.
+- **Silent-failure watchdog** — the things that don't alert until catastrophe.
+- **Daily ops roll-up** — start the day with what to look at, not what to discover.
+
+These are starting points, not the whole menu — most engagements are scoped around your team's specific bottlenecks. If that's adjacent to a problem you're solving, the starting point is a [30-minute intro call](https://calendly.com/arimthong/30min) — or reach me at [rimthong@gmail.com](mailto:rimthong@gmail.com?subject=Consult) or on [LinkedIn](https://linkedin.com/in/rimthong).
 
 ## Strategic Advising / Fractional CTO Services
 

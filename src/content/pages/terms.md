@@ -2,7 +2,7 @@
 title: Terms of Service
 ---
 
-**Last updated on June 1, 2023**
+**Last updated on July 25, 2026**
 
 These Terms of Service ("Terms") govern your access to and use of Rimthong.com ("the Website") and any related services provided by Rimthong / Alex Rimthong ("we," "us," or "our"). Please read these Terms carefully before using the Website.
 
