@@ -1,0 +1,78 @@
+---
+import ArrowRight from '../icons/ArrowRight.astro';
+---
+
+<section class="py-16 bg-slate-900 text-white relative overflow-hidden">
+    <!-- Background glow accents -->
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
+        <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+            <span class="text-xs font-bold uppercase tracking-widest text-primary">How I Can Help</span>
+            <h2 class="text-3xl font-extrabold sm:text-4xl text-white mt-2 tracking-tight">
+                Consulting, Coaching & Architecture
+            </h2>
+            <p class="text-slate-400 mt-4 text-base sm:text-lg">
+                Empowering engineering teams to build resilient systems, scale high-performing cultures, and strengthen security postures.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Card 1: Engineering Leadership -->
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-8 flex flex-col justify-between hover:border-primary/60 hover:bg-slate-800 transition-all duration-300 group">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xl font-bold mb-6 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                        ⚡️
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Engineering Leadership</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                        Coaching new and seasoned engineering managers, building trust-based delivery cultures, and aligning tech teams with product strategy.
+                    </p>
+                </div>
+                <a href="/services" class="inline-flex items-center gap-2 text-sm font-semibold text-primary group-hover:text-cyan-400 transition-colors">
+                    Learn more <ArrowRight class="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </a>
+            </div>
+
+            <!-- Card 2: Security & Risk Advisory -->
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-8 flex flex-col justify-between hover:border-primary/60 hover:bg-slate-800 transition-all duration-300 group">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xl font-bold mb-6 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                        🛡️
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Security & Compliance</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                        Pragmatic security reviews, vulnerability posture assessments, threat modeling, and embedding security best practices directly into your dev workflows.
+                    </p>
+                </div>
+                <a href="/services" class="inline-flex items-center gap-2 text-sm font-semibold text-primary group-hover:text-cyan-400 transition-colors">
+                    Learn more <ArrowRight class="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </a>
+            </div>
+
+            <!-- Card 3: Technical Architecture -->
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-8 flex flex-col justify-between hover:border-primary/60 hover:bg-slate-800 transition-all duration-300 group">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xl font-bold mb-6 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                        🏗️
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Product Architecture</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-6">
+                        Designing scalable Web & Cloud architectures, streamlining developer velocity, and tackling technical debt with clear roadmaps.
+                    </p>
+                </div>
+                <a href="/services" class="inline-flex items-center gap-2 text-sm font-semibold text-primary group-hover:text-cyan-400 transition-colors">
+                    Learn more <ArrowRight class="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </a>
+            </div>
+        </div>
+
+        <!-- CTA Bottom -->
+        <div class="mt-12 text-center">
+            <a href="/contact" class="inline-flex items-center gap-2 px-8 py-3.5 bg-primary text-white font-semibold text-sm rounded-full shadow-lg hover:shadow-cyan-500/20 hover:-translate-y-0.5 transition-all duration-200">
+                Book a Consultation &rarr;
+            </a>
+        </div>
+    </div>
+</section>

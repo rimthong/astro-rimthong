@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import NoHeaderLayout from '../layouts/NoHeaderLayout.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
+import ServicesOverview from '../components/ServicesOverview.astro';
 import FeaturedPostPreview from '../components/FeaturedPostPreview.astro';
 import PostPreview from '../components/PostPreview.astro';
 import siteConfig from '../data/site-config';
@@ -15,15 +16,22 @@ const latestPosts = posts.filter(({ data }) => !data.isFeatured).slice(0, 3);
 ---
 
 <NoHeaderLayout description={siteConfig.description} image={siteConfig.image}>
-    <div class="relative bg-slate-50 border-b border-slate-100">
+    <div class="relative bg-gradient-to-b from-slate-50 via-white to-slate-50 border-b border-slate-100">
         <Header class="relative" />
         <Hero />
     </div>
-    <main class="grow py-12 sm:py-16">
+
+    <!-- Services Overview Section -->
+    <ServicesOverview />
+
+    <main class="grow py-16 bg-white">
         {
             featuredPosts?.length > 0 && (
-                <div class="px-4 mb-12 border-b border-slate-200 sm:px-8 sm:mb-16">
+                <div class="px-4 mb-16 border-b border-slate-200/80 pb-16 sm:px-8">
                     <div class="max-w-6xl mx-auto">
+                        <div class="mb-8">
+                            <span class="text-xs font-bold uppercase tracking-widest text-primary">Featured Story</span>
+                        </div>
                         {featuredPosts.map((post) => (
                             <FeaturedPostPreview post={post} />
                         ))}
@@ -33,10 +41,11 @@ const latestPosts = posts.filter(({ data }) => !data.isFeatured).slice(0, 3);
         }
         {
             latestPosts?.length > 0 && (
-                <div class="px-4 mb-12 sm:px-8 sm:mb-16">
-                    <div class="max-w-3xl mx-auto mb-8 sm:mb-12">
-                        <h2 class="text-sm uppercase tracking-wider text-slate-900 after:content-[''] after:block after:w-16 after:h-px after:bg-primary after:mt-4">
-                            Latest Articles
+                <div class="px-4 mb-16 sm:px-8">
+                    <div class="max-w-3xl mx-auto mb-10 sm:mb-12">
+                        <span class="text-xs font-bold uppercase tracking-widest text-primary">Articles & Thoughts</span>
+                        <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
+                            Latest Engineering & Leadership Writing
                         </h2>
                     </div>
                     <div class="max-w-3xl mx-auto xl:max-w-6xl">
@@ -44,17 +53,17 @@ const latestPosts = posts.filter(({ data }) => !data.isFeatured).slice(0, 3);
                             <PostPreview post={post} />
                         ))}
                     </div>
-                    <div class="max-w-3xl mx-auto pt-8 border-t border-slate-200 sm:pt-12">
+                    <div class="max-w-3xl mx-auto pt-8 border-t border-slate-200 sm:pt-12 text-center">
                         <a
-                            class="px-8 py-2.5 inline-flex gap-1.5 justify-center items-center font-semibold bg-primary text-white rounded-full transition duration-300 hover:shadow-button"
+                            class="px-8 py-3 inline-flex gap-2 justify-center items-center font-semibold bg-slate-900 text-white rounded-full transition duration-300 hover:bg-primary shadow-sm hover:shadow-md"
                             href="/blog"
                         >
-                            View All Posts
+                            View All Articles &rarr;
                         </a>
                     </div>
                 </div>
             )
         }
-        <Subscribe class="px-4 my-12 sm:px-8 sm:my-16" />
+        <Subscribe class="px-4 my-16 sm:px-8" />
     </main>
 </NoHeaderLayout>
