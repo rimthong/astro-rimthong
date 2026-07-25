@@ -14,7 +14,7 @@ module.exports = {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans]
             },
-            typography: (theme) => ({
+            typography: () => ({
                 DEFAULT: {
                     css: {
                         a: {

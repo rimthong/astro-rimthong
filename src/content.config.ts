@@ -1,4 +1,6 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { z } from 'astro/zod';
+import { glob } from 'astro/loaders';
 
 const seoSchema = z.object({
     title: z.string().min(5).max(120).optional(),
@@ -13,6 +15,7 @@ const seoSchema = z.object({
 });
 
 const blog = defineCollection({
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
     schema: z.object({
         title: z.string(),
         excerpt: z.string().optional(),
@@ -31,6 +34,7 @@ const blog = defineCollection({
 });
 
 const pages = defineCollection({
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/pages' }),
     schema: z.object({
         title: z.string(),
         featureImage: z
