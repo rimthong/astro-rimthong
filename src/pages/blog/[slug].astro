@@ -62,9 +62,9 @@ if (seo?.image?.src) {
             </header>
             {
                 featureImage?.src && (
-                    <figure class="mx-auto my-6 sm:my-8 lg:my-12">
-                        <img class="w-full rounded-lg" src={featureImage.src} loading="lazy" decoding="async" alt={featureImage.alt || ''} />
-                        {featureImage.caption && <figcaption class="mt-1.5 text-xs sm:text-sm">{featureImage.caption}</figcaption>}
+                    <figure class="max-w-4xl mx-auto my-6 sm:my-8 lg:my-12 overflow-hidden">
+                        <img class="w-full max-h-[500px] object-cover rounded-2xl shadow-md" src={featureImage.src} loading="lazy" decoding="async" alt={featureImage.alt || ''} />
+                        {featureImage.caption && <figcaption class="mt-2 text-center text-xs sm:text-sm text-slate-500">{featureImage.caption}</figcaption>}
                     </figure>
                 )
             }

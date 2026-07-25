@@ -8,34 +8,74 @@ const socialLinks = siteConfig.socialLinks || [];
 
 {
     (hero?.title || hero?.text || hero?.avatar?.src) && (
-        <>
+        <section class="px-4 py-16 relative sm:px-8 sm:py-24 overflow-hidden">
             {hero?.backgroundImage?.src && (
-                <div class="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url(${hero?.backgroundImage?.src})` }} />
+                <div class="absolute inset-0 bg-cover bg-center opacity-10 blur-xs pointer-events-none" style={{ backgroundImage: `url(${hero?.backgroundImage?.src})` }} />
             )}
-            <section class="px-4 py-12 relative sm:px-8 sm:py-16">
-                <div class="w-full max-w-3xl mx-auto flex flex-col items-center text-center">
-                    {hero?.avatar?.src && (
-                        <div class="p-6">
-                            <img
-                                src={hero?.avatar?.src}
-                                alt={hero?.avatar?.alt || ''}
-                                class="w-32 aspect-square object-cover rounded-full border-2 border-primary shadow-avatar"
-                            />
-                        </div>
-                    )}
-                    {hero?.title && <h1 class:list={['text-4xl font-bold text-slate-900 sm:text-5xl', { 'mt-6': hero?.avatar?.src }]}>{hero?.title}</h1>}
-                    {hero?.text && (
-                        <p class:list={['text-slate-700 sm:text-lg', { 'mt-4': hero?.title, 'mt-6': hero?.avatar?.src && !hero?.title }]}>{hero?.text}</p>
-                    )}
-                    {socialLinks.length > 0 && (
-                        <div class:list={['flex flex-wrap gap-x-4 gap-y-3 justify-center', { 'mt-7': hero?.avatar?.src || hero?.title || hero?.text }]}>
-                            {(siteConfig.socialLinks || []).map((link) => (
-                                <SocialLink {...link} class="bg-white text-slate-700 hover:bg-primary hover:text-white hover:shadow-button" />
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </section>
-        </>
+            <div class="w-full max-w-4xl mx-auto flex flex-col items-center text-center relative z-10">
+        <!-- Status Badge -->
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-semibold tracking-wide uppercase mb-6 shadow-xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Montreal, QC &bull; Leadership & Security Advisory
+        </div>
+
+        {hero?.avatar?.src && (
+            <div class="relative mb-6">
+                <div class="absolute -inset-1 rounded-full bg-gradient-to-r from-primary via-cyan-500 to-indigo-500 opacity-30 blur-md"></div>
+                <img
+                    src={hero?.avatar?.src}
+                    alt={hero?.avatar?.alt || 'Alexandre Rimthong'}
+                    class="relative w-32 h-32 aspect-square object-cover rounded-full border-4 border-white shadow-xl"
+                />
+            </div>
+        )}
+
+        {hero?.title && (
+            <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl max-w-2xl leading-tight">
+                {hero?.title}
+            </h1>
+        )}
+
+        {hero?.text && (
+            <p class="mt-6 text-lg text-slate-600 sm:text-xl max-w-2xl leading-relaxed">
+                {hero?.text}
+            </p>
+        )}
+
+        <!-- Expertise Tags -->
+        <div class="mt-6 flex flex-wrap gap-2 justify-center max-w-xl">
+            {['Engineering Leadership', 'Security Advisory', 'Product Architecture', 'Team Coaching'].map((tag) => (
+                <span class="px-3 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium border border-slate-200/70">
+                    {tag}
+                </span>
+            ))}
+        </div>
+
+        <!-- Action CTAs -->
+        <div class="mt-8 flex flex-wrap gap-4 justify-center items-center">
+            <a
+                href="/services"
+                class="px-7 py-3 bg-primary text-white font-semibold text-sm rounded-full shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5"
+            >
+                Consulting & Services
+            </a>
+            <a
+                href="/blog"
+                class="px-7 py-3 bg-white text-slate-800 font-semibold text-sm rounded-full border border-slate-200 shadow-xs hover:border-slate-300 hover:bg-slate-50 transition-all duration-200"
+            >
+                Read Articles & Insights
+            </a>
+        </div>
+
+        <!-- Social Links -->
+        {socialLinks.length > 0 && (
+            <div class="mt-8 flex flex-wrap gap-3 justify-center items-center">
+                {socialLinks.map((link) => (
+                    <SocialLink {...link} class="bg-white text-slate-600 hover:bg-primary hover:text-white hover:shadow-sm border border-slate-200/80 transition duration-200" />
+                ))}
+            </div>
+        )}
+    </div>
+</section>
     )
 }
