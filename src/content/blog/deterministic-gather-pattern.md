@@ -1,14 +1,14 @@
 ---
 title: Put the boring half of your agent in code
-excerpt: After building a couple dozen agent workflows against live systems, I keep coming back to the same boundary: scripts should gather and verify the facts, while models should interpret them.
+excerpt: 'After building a couple dozen agent workflows against live systems, I keep coming back to the same boundary: scripts should gather and verify the facts, while models should interpret them.'
 publishDate: 'Aug 15 2026'
 featureImage:
-  src: ''
-  alt: The deterministic gather pattern
-  caption: Separating evidence gathering from judgment
+  src: '/darkest2.jpeg'
+  alt: Adventurers fighting monsters
+  caption: Adventurers fighting monsters
 seo:
   image:
-    src: ''
+    src: '/darkest2.jpeg'
 ---
 
 I have built roughly twenty-five AI agent workflows against live systems over the past five months. Some of them have been useful. Some have produced answers that looked reasonable until I checked them against another source.
