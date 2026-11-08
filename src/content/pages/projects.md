@@ -5,18 +5,22 @@ featureImage:
   alt: Abstract art picture, maybe capturing the complexity of projects?
 seo:
   title: Projects
-  description: What I'm currently fiddling with — engineering and personal agentic recipes, maker projects, and a few things on the back burner.
+  description: What I'm currently fiddling with — open-source tools, autonomous software factories, engineering and personal agentic recipes, and maker builds.
   image:
     src: '/post-8.jpg'
 ---
 
 # Projects
 
-This page is my workbench. What's on it shifts with what I'm building, breaking, or curious about — engineering and personal agentic recipes, maker projects, and a few things on the back burner. If something here is useful to you, [let's talk](/contact).
+This page is my workbench. What's on it shifts with what I'm building, breaking, or curious about — open-source tools, autonomous software factory experiments, engineering and personal agentic recipes, maker projects, and a few things on the back burner. If something here is useful to you, [let's talk](/contact).
 
 ## Now
 
 I'm building **Rimcorp**, my consulting practice focused on agentic engineering work — the tedious parts of running engineering (cost attribution, security posture, infra hygiene, daily ops) automated into one-command digests that leave the judgment to the human. Drawing on 25 years in engineering (IC to leadership), the recipes below are born from my day-job work as an engineering leader; Rimcorp is the practice I turn them into. If that's adjacent to a problem you're solving, the [services page](/services) is the starting point.
+
+## Open-source & software factory builds
+
+- **[DiskGoblin](/projects/diskgoblin)** — *See what's gobblin' your disk space — from the terminal to the treemap.* A strictly read-only, symlink-safe, hard-link deduplicated disk space analyzer written in Rust with a fast CLI, a zero-dependency localhost web bridge, and a dark native macOS desktop utility (`DiskGoblin.app`) built with React and `d3-hierarchy`. Just as importantly, it was built end-to-end as a controlled **autonomous software factory experiment** across 20+ agent runs, with a built-in telemetry evaluator (`factory_eval`) measuring model accuracy, speed, repair loops, and cost. *[Project page](/projects/diskgoblin) · [Read the factory & benchmark retrospective](/blog/building-diskgoblin-software-factory) · [GitHub](https://github.com/RimCorp/DiskGoblin)*
 
 ## Engineering agentic recipes
 
