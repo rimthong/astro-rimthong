@@ -23,6 +23,24 @@ module.exports = {
                                 'text-decoration': 'none'
                             }
                         },
+                        'code::before': {
+                            content: 'none'
+                        },
+                        'code::after': {
+                            content: 'none'
+                        },
+                        code: {
+                            backgroundColor: '#f1f5f9',
+                            borderRadius: '0.25rem',
+                            fontWeight: '500',
+                            padding: '0.125rem 0.375rem'
+                        },
+                        'pre code': {
+                            backgroundColor: 'transparent',
+                            borderRadius: '0',
+                            fontWeight: 'inherit',
+                            padding: '0'
+                        },
                         blockquote: {
                             border: 0,
                             fontSize: '1.3125em',

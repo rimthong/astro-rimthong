@@ -21,5 +21,61 @@ const { ...head } = Astro.props;
             <slot />
             <Footer />
         </div>
+        <dialog
+            id="image-lightbox-dialog"
+            aria-label="Enlarged screenshot preview"
+            class="backdrop:bg-slate-950/80 bg-transparent p-2 sm:p-6 max-w-[96vw] max-h-[96vh] m-auto rounded-2xl focus:outline-none"
+        >
+            <div class="relative flex flex-col items-center bg-slate-900 text-slate-100 p-3 sm:p-5 rounded-2xl shadow-2xl max-w-6xl">
+                <div class="w-full flex items-center justify-between gap-4 mb-3">
+                    <p id="image-lightbox-caption" class="text-xs sm:text-sm text-slate-300 truncate"></p>
+                    <button
+                        type="button"
+                        data-lightbox-close
+                        aria-label="Close enlarged screenshot"
+                        class="shrink-0 rounded-lg bg-slate-800 px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-100 hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    >
+                        Close (Esc)
+                    </button>
+                </div>
+                <img
+                    id="image-lightbox-img"
+                    src=""
+                    alt=""
+                    class="max-h-[82vh] w-auto max-w-full rounded-xl object-contain"
+                />
+            </div>
+        </dialog>
+        <script is:inline>
+            if (!window.__diskgoblinLightboxBound) {
+                window.__diskgoblinLightboxBound = true;
+                document.addEventListener('click', function (event) {
+                    var target = event.target;
+                    if (!(target instanceof Element)) return;
+                    var trigger = target.closest('[data-lightbox-src]');
+                    var dialog = document.getElementById('image-lightbox-dialog');
+                    if (trigger && dialog instanceof HTMLDialogElement) {
+                        var img = document.getElementById('image-lightbox-img');
+                        var caption = document.getElementById('image-lightbox-caption');
+                        if (img instanceof HTMLImageElement) {
+                            img.src = trigger.getAttribute('data-lightbox-src') || '';
+                            img.alt = trigger.getAttribute('data-lightbox-alt') || '';
+                        }
+                        if (caption) {
+                            caption.textContent = trigger.getAttribute('data-lightbox-caption') || trigger.getAttribute('data-lightbox-alt') || '';
+                        }
+                        dialog.showModal();
+                        return;
+                    }
+                    if (target.closest('[data-lightbox-close]') && dialog instanceof HTMLDialogElement) {
+                        dialog.close();
+                        return;
+                    }
+                    if (target === dialog && dialog instanceof HTMLDialogElement) {
+                        dialog.close();
+                    }
+                });
+            }
+        </script>
     </body>
 </html>

@@ -5,18 +5,22 @@ featureImage:
   alt: Abstract art picture, maybe capturing the complexity of projects?
 seo:
   title: Projects
-  description: What I'm currently fiddling with — engineering and personal agentic recipes, maker projects, and a few things on the back burner.
+  description: What I'm currently fiddling with — open-source tools, autonomous software factories, engineering and personal agentic recipes, and maker builds.
   image:
     src: '/post-8.jpg'
 ---
 
 # Projects
 
-This page is my workbench. What's on it shifts with what I'm building, breaking, or curious about — engineering and personal agentic recipes, maker projects, and a few things on the back burner. If something here is useful to you, [let's talk](/contact).
+This page is my workbench. What's on it shifts with what I'm building, breaking, or curious about — open-source tools, autonomous software factory experiments, engineering and personal agentic recipes, maker projects, and a few things on the back burner. If something here is useful to you, [let's talk](/contact).
 
 ## Now
 
 I'm building **Rimcorp**, my consulting practice focused on agentic engineering work — the tedious parts of running engineering (cost attribution, security posture, infra hygiene, daily ops) automated into one-command digests that leave the judgment to the human. Drawing on 25 years in engineering (IC to leadership), the recipes below are born from my day-job work as an engineering leader; Rimcorp is the practice I turn them into. If that's adjacent to a problem you're solving, the [services page](/services) is the starting point.
+
+## Open-source & software factory builds
+
+- **[DiskGoblin](/projects/diskgoblin)**: *See what's gobblin' your disk space, from the terminal to the treemap.* A read-only, symlink-safe, hard-link-aware disk space analyzer written in Rust with a terminal CLI, a localhost browser view (`diskgoblin --ui`), and a macOS desktop app (`DiskGoblin.app`) wrapping a dark React and `d3-hierarchy` workspace in `AppKit` and `WKWebView`. I also built it as a structured coding-agent experiment with an in-repo telemetry evaluator (`factory_eval`) tracking run durations, repair loops, and costs. *[Project page](/projects/diskgoblin) · [Building DiskGoblin with Coding Agents](/blog/building-diskgoblin-software-factory)*
 
 ## Engineering agentic recipes
 
