@@ -1,148 +1,181 @@
 ---
-title: 'How We Built DiskGoblin: Running a Multi-Agent Software Factory (and What the Benchmarks Showed)'
-excerpt: 'Most AI coding demos stop at a single prompt and a toy app. To test how an autonomous software factory actually behaves on systems code, we built DiskGoblin — a Rust and React/D3 disk space analyzer — across 20+ metered agent runs, benchmarking three LLM configurations and our own parallel NVMe engine along the way.'
+title: 'Building DiskGoblin with Coding Agents'
+excerpt: 'What I learned building a read-only Rust and React disk space analyzer using coding agents, upfront specifications, paired task comparisons, and NVMe traversal benchmarks.'
 publishDate: 'Nov 07 2026'
 isFeatured: true
 featureImage:
   src: '/diskgoblin-app.png'
-  alt: DiskGoblin dark native macOS desktop application showing a squarified treemap and ranked directory list
-  caption: 'DiskGoblin running as a native macOS app — built end-to-end by an orchestrated software factory across Rust, React, D3, and AppKit/WebKit.'
+  alt: 'DiskGoblin macOS desktop app displaying a dark squarified treemap on the left, ranked child folders on the right, and an item inspector bar at the bottom'
+  caption: 'DiskGoblin running as a macOS desktop app on a demonstration workspace, pairing a Rust scanning engine with a dark React and d3-hierarchy interface inside an AppKit and WKWebView window.'
 seo:
-  title: 'Building DiskGoblin with an Autonomous Multi-Agent Software Factory'
-  description: 'How we built a Rust + React/D3 disk analyzer via an autonomous software factory, plus empirical benchmarks on LLMs and NVMe parallel traversal.'
+  title: 'Building DiskGoblin with Coding Agents'
+  description: 'A candid look at building DiskGoblin with coding agents, upfront specs, task routing probes, CI toolchain drift, and NVMe traversal benchmarks.'
   image:
     src: '/diskgoblin-app.png'
   pageType: 'article'
 ---
 
-Everyone has seen the 60-second demo where an AI agent one-shots a Todo app. If you lead engineering teams or build production software, you already know why those demos don't translate to real work: the moment you introduce cross-crate boundaries, OS-level syscalls, concurrency invariants, and strict backwards-compatible schemas, "vibe coding" collapses into an unmaintainable tangle of regressions.
+I built **[DiskGoblin](/projects/diskgoblin)** to answer a practical question: how far can coding agents carry a systems and UI project when I give them explicit module boundaries, file-scope limits, and automated verification checks up front?
 
-I wanted to test a different question: **What happens when you treat autonomous coding agents not as a chat partner, but as a disciplined software factory?**
+DiskGoblin is a read-only disk space analyzer written in Rust with a React and `d3-hierarchy` visual interface. It runs either as a terminal CLI, in a local browser via `diskgoblin --ui`, or as a macOS desktop app (`DiskGoblin.app`) that hosts the web interface inside an `AppKit` and `WKWebView` window. Source code is currently private while I prepare it for release.
 
-To find out, I built **[DiskGoblin](/projects/diskgoblin)** ([GitHub](https://github.com/RimCorp/DiskGoblin)) — a strictly read-only, symlink-safe, hard-link deduplicated disk space analyzer in Rust with a terminal CLI, a localhost web bridge, and a dark native macOS desktop app built with React and `d3-hierarchy`.
-
-And because I don't trust anecdotes without telemetry, we built the factory's own evaluation harness (`factory_eval`) directly into the repository. Every single task dispatched to an agent was logged as a schema-validated JSON record tracking active wall-clock seconds, token consumption, cache hit rates, compile/test failures, repair loops, and API cost.
-
-Here is how we set up the factory, how we orchestrated the build, and what both our **LLM factory benchmarks** and our **Apple M2 Pro NVMe systems benchmarks** actually told us.
+To keep track of how the agents actually performed, I included a small evaluation tool (`factory_eval`) in the workspace and logged JSON run records for 20 agent executions across 16 implementation tasks. Here is how I structured the project, where I had to step in, and what the agent telemetry and filesystem benchmarks showed.
 
 ---
 
-## 1. The Setup: Architecture First, Agents Second
+## 1. Defining Boundaries and Acceptance Criteria Before Implementation
 
-The biggest mistake people make with coding agents is handing them a vague goal and letting them invent the architecture mid-flight. In a real engineering org, you don't ask five developers to write code in parallel before agreeing on interfaces.
+Before dispatching any implementation work, I wrote the architecture document, six Architecture Decision Records (ADRs), an agent operating contract (`AGENTS.md`), and dependency-ordered issue specs. Every issue defined the objective, the exact files the agent was allowed to create or modify, what was out of scope, and the verification commands required before opening a pull request:
 
-Before a single line of Rust or TypeScript was written (`M0`), we froze the entire engineering charter in the repository:
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace --all-targets
+```
 
-1. **The Execution Contract (`AGENTS.md`):** Every coding agent operating in the repo had to obey a strict operating contract:
-   - **Strict Scope Containment:** An agent may only create or modify the exact files listed in its assigned issue's `## Scope` section. Touching an out-of-scope file is an automatic rejection.
-   - **Crate Boundary Enforcement (`ADR-001`):** `diskgoblin-core` is a pure library crate. It is forbidden from depending on `clap`, reading CLI args, or printing to `stdout`/`stderr`.
-   - **Safety by Default (`ADR-003`):** DiskGoblin is strictly read-only. Calling `std::fs::remove_file` or `remove_dir_all` on scanned paths is banned, and traversal must exclusively use `std::fs::symlink_metadata` (`lstat`) so symlink loops can never hang the scanner.
-   - **Dependency Discipline:** Zero new crates in `Cargo.toml` or packages in `package.json` unless explicitly authorized by the issue spec.
-   - **Mandatory Quality Gates:** No agent can open a PR until `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace --all-targets` pass with zero warnings.
-2. **Six Architecture Decision Records (`ADR-001` to `ADR-006`):** Covering workspace layout, `lstat` vs. `stat`, `(dev, ino)` hard-link deduplication, cooperative `CancelToken` throttling, parallel traversal gates, and desktop visualization boundaries.
-3. **18 Atomic, Dependency-Ordered Issues (`DG-001` to `DG-018`):** Each issue had explicit acceptance criteria, allowed file sets, and deterministic verification commands across four milestones:
-   - **M0 (Foundation):** Workspace & CI (`DG-001`), Core Domain & Unix Metadata (`DG-002`), Synthetic Test Fixtures (`DG-003`).
-   - **M1 (Sequential Engine & CLI):** Byte Formatting (`DG-004`), Sequential Scanner (`DG-005`), Bottom-Up Tree Aggregator & Hard-Link Dedup (`DG-006`), Cooperative Cancellation & 50ms Throttled Progress (`DG-007`), Versioned JSON Schema (`DG-008`), CLI Parser & Table Renderer (`DG-009`), E2E CLI Integration Tests (`DG-010`).
-   - **M2 (Performance & Correctness Oracles):** Criterion Benchmarks (`DG-011`), Rayon Parallel Traversal Engine & SSD Study (`DG-012`), `proptest` Equivalence Suite (`DG-013`).
-   - **M3 & M4 (Desktop App & Factory Evaluation):** Tauri 2 IPC Backend (`DG-014`), React + D3 Squarified Treemap (`DG-015`), Toolbar, Rankings & Vitest Suite (`DG-016`), `factory_eval` Telemetry Tool (`DG-017`), and the 20-Run Comparative Study (`DG-018`) — followed by unified `--ui` bridge (`DG-019`) and the dark native macOS redesign (`DG-020`).
+Four architectural rules shaped the codebase from the start:
 
-### How Orchestration Worked in Practice
+- **Strict crate boundaries:** `crates/diskgoblin-core` is a pure library crate. It cannot depend on `clap`, read command-line flags, or write to `stdout` or `stderr`.
+- **Read-only traversal:** Calling `std::fs::remove_file` or `std::fs::remove_dir_all` on scanned paths is prohibited. Directory traversal must use `std::fs::symlink_metadata` (`lstat`) rather than following symbolic links.
+- **Dependency discipline:** Agents could not add crates to `Cargo.toml` or packages to `package.json` unless authorized by the issue specification.
+- **Isolated worktrees:** Each task ran in its own Git worktree (`/tmp/worktrees/DG-XXX-...`) branched from `main`, using a pre-warmed local Cargo cache so tasks with disjoint file scopes could run in parallel without stepping on each other.
 
-Instead of running agents in a shared working directory where they step on each other's git state, the orchestrator dispatched each issue into an **isolated Git worktree** (`/tmp/worktrees/DG-XXX-...`) branched off `main`, paired with a pre-warmed offline Cargo dependency cache (`/tmp/dg009-cargo-home`).
-
-Whenever two issues had disjoint write sets and satisfied dependencies in the DAG — for instance, `DG-014` (Rust desktop IPC backend) and `DG-017` (`factory_eval` CLI evaluator), or `DG-015` (D3 treemap) and `DG-017` — we ran them concurrently in separate worktrees, verified their gates independently, and merged them sequentially through GitHub Pull Requests.
+Upfront specs reduced ambiguity, though they did not eliminate human design adjustments. For example, during DG-002 (core domain models and Unix metadata extraction), the initial issue text suggested storing non-UTF-8 filenames as raw `OsString` values while also requiring standard `std::fs::symlink_metadata` calls, which expect `Path` or `PathBuf`. Because `PathBuf` wraps an `OsString` directly without UTF-8 loss on Unix, I updated the specification to allow `PathBuf` in the domain structs while preserving a raw-bytes round-trip test.
 
 ---
 
-## 2. Benchmarking the Factory: Three Agent Configurations Across 20 Runs
+## 2. What the Small Agent Experiment Suggested About Task Routing
 
-We evaluated three distinct **Harness × Model** configurations across the first 20 recorded runs:
+Across the first 16 recorded issues (DG-001 through DG-015, plus DG-017), I logged 20 agent runs across three harness and model configurations:
 
-- **Configuration A:** `Codex CLI 0.166.0` × `openai/gpt-6.1-sol` (9 runs)
-- **Configuration B:** `OpenCode v2.2.5` × `openrouter/deepseek/deepseek-v4.1-flash-1017` (9 runs)
-- **Configuration C:** `OpenCode v2.2.5` × `openrouter/z-ai/glm-5.3-flash` (2 runs)
+- **Configuration A:** Codex CLI 0.166.0 with openai/gpt-6.1-sol (9 runs)
+- **Configuration B:** OpenCode v2.2.5 with openrouter/deepseek/deepseek-v4.1-flash-1017 (9 runs)
+- **Configuration C:** OpenCode v2.2.5 with openrouter/z-ai/glm-5.3-flash (2 runs)
 
-Here is the verbatim summary table generated by running `cargo run -p diskgoblin-cli --bin factory_eval -- docs/experiments/runs/` against the repository's run ledger:
+To test all three configurations under matched conditions before routing the rest of the backlog, I ran two three-way comparisons from the same starting commits and specifications:
 
-| Harness | Provider / Model | Attempted | First-Pass % | Eventual % | Median Active Min | Mean Active Min | Mean Cost ($) | Total Tokens | Mean Repairs |
-| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `codex` | `openai / gpt-6.1-sol` | 9 | 88.9% | 100.0% | 1.8 | 2.4 | $0.00 *(sub)* | 4,390,023 | 0.00 |
-| `opencode` | `deepseek / deepseek-v4.1-flash-1017` | 9 | 88.9% | 100.0% | 2.6 | 2.6 | $0.03 | 764,569 | 0.11 |
-| `opencode` | `z-ai / glm-5.3-flash` | 2 | 0.0% | 100.0% | 4.8 | 4.8 | $0.06 | 373,618 | 1.00 |
+1. **DG-004 (Formatting logic):** IEC and SI byte formatting, percentage calculations, and ASCII progress bars.
+2. **DG-005 (Filesystem traversal):** Symlink-safe sequential directory scanning, mount-boundary checks, and permission error collection.
 
-*(Note on token & cost accounting: Configuration A ran under a subscription plan with cached input tokens included in its 4.39M total — achieving a 92.8% prompt cache hit rate — whereas OpenCode reported uncached input tokens separately from its 12.2M cached token reads at a 95.6% cache hit rate. Under a sensitivity model of $1/M uncached input, $0.10/M cached input, and $5/M output, Configuration A's imputed cost is roughly **$0.12 per accepted PR** vs. Configuration B's metered **$0.03 per accepted PR**.)*
-
-### Head-to-Head Paired Experiments: `DG-004` vs. `DG-005`
-
-Because routing complex concurrency tasks to `gpt-6.1-sol` and bounded tasks to `deepseek-v4.1-flash` introduces a task-selection confounder, we also ran **controlled three-way head-to-head comparisons** from identical starting commit SHAs and identical `AGENTS.md` / issue specifications on two representative tasks:
-
-1. **`DG-004` (Pure Logic — IEC/SI Byte Formatting, Percentage & ASCII Bar Renderer)**
-2. **`DG-005` (Systems I/O — Symlink-Safe Sequential Directory Scanner & Mount Boundary Pruning)**
-
-| Task | Config A (`gpt-6.1-sol`) | Config B (`deepseek-v4.1-flash`) | Config C (`glm-5.3-flash`) | Takeaway |
+| Task | Config A (gpt-6.1-sol) | Config B (deepseek-v4.1-flash-1017) | Config C (glm-5.3-flash) | Observation |
 | :--- | :--- | :--- | :--- | :--- |
-| **`DG-004` (Pure Logic)** | `73 s` · 0 repairs · 10 tool calls | **`63 s` · 0 repairs · $0.013** | `194 s` · 1 repair · $0.036 | **B wins:** 1.16× faster than A at just 1.3 cents. C took 3.08× B's time and 2.80× B's cost. |
-| **`DG-005` (Systems I/O)** | **`106 s` · 0 repairs · 9 tool calls** | `156 s` · 0 repairs · $0.044 | `382 s` · 1 repair · $0.086 | **A wins:** 1.47× faster than B with 5.5× fewer tool calls. C took 3.60× A's time and needed a repair loop. |
+| **DG-004 (Formatting logic)** | 73 s active, 0 repairs, 10 tool calls (Subscription; per-run cost unavailable) | 63 s active, 0 repairs, 20 tool calls ($0.013 metered) | 194 s active, 1 repair, 26 tool calls ($0.036 metered) | Config B finished fastest at $0.013 metered API cost. Config C needed a repair loop after an initial test failure. |
+| **DG-005 (Filesystem I/O)** | 106 s active, 0 repairs, 9 tool calls (Subscription; per-run cost unavailable) | 156 s active, 0 repairs, 50 tool calls ($0.044 metered) | 382 s active, 1 repair, 47 tool calls ($0.086 metered) | Config A finished in 106 s with 9 tool calls. Config B passed on the first attempt with more exploration steps. |
 
-### Three Lessons from the Factory Telemetry
+A few caveats apply to these numbers:
 
-1. **Retire underperforming models early with paired probes:** On both paired tasks, `glm-5.3-flash` (Config C) hit compile/Clippy errors requiring repair loops, ran **2.45–3.08× slower** than `deepseek-v4.1-flash` in the exact same OpenCode harness, and cost **2.14× more** in API spend ($0.122 vs. $0.057 across the pair). Two controlled probes were enough evidence to retire Config C after `DG-005`.
-2. **Hybrid routing is the sweet spot:**
-   - For **stateful systems programming, concurrency, and cross-boundary IPC** (`DG-005` scanner, `DG-006` bottom-up tree aggregator + hard-link deduplication in `108s`, `DG-007` cooperative cancellation in `163s`, `DG-012` Rayon parallel traversal in `417s`, and `DG-014` Tauri IPC in `237s`), `Codex CLI + gpt-6.1-sol` was rock-solid — averaging just 13 tool calls per issue with zero code repair loops.
-   - For **bounded modules, property test suites, benchmarks, and React/D3 UI components** (`DG-003` fixtures, `DG-004` formatting, `DG-008` JSON schema in `58s`, `DG-011` Criterion benchmarks, `DG-013` `proptest` suite, `DG-015` & `DG-016` React + D3 treemap and Vitest suite), `OpenCode + deepseek-v4.1-flash` delivered **100% eventual acceptance at ~$0.03 per PR**.
-3. **Environment skew matters as much as model quality:** When we cataloged all failure modes across the cohort, the most interesting friction wasn't a model hallucination — it was **toolchain version skew**. Our local macOS environment ran `rustc 1.85.0`, while GitHub Actions CI ran `rustc 1.99.0`, which introduced a strict new lint (`clippy::manual_is_multiple_of`) that failed CI on unsigned modulo checks (`entries_seen % 256 == 0`). Updating our power-of-two throttling checks to bitwise masks (`entries_seen & 255 == 0`) resolved the CI gate cleanly and gave us a concrete rule for future factory specs: **always pin `rust-toolchain.toml` so local and CI linters cannot drift.**
+- **Small sample size and task-assignment confounding:** The two paired tasks only have one run per configuration (`n = 1` per cell), so they are directional probes rather than a general model benchmark. Across the remaining issues, I intentionally routed tasks based on complexity, which confounds aggregate comparisons across the 20-run cohort.
+- **What "active minutes" measures:** Active time in `factory_eval` records the wall-clock seconds between launching an agent in a prepared worktree and the agent finishing its local verification gates (minus rate-limit pauses, which were zero). It excludes the time I spent writing specifications, setting up worktrees, reviewing pull requests, waiting for GitHub Actions CI, and directing the later UI redesigns (DG-016, DG-018, DG-019, and DG-020 were not part of the 20-run telemetry ledger).
+- **Metered vs. subscription costs:** Configurations B and C ran through OpenRouter with metered per-run billing ($0.274 total across 9 runs for Config B, or $0.030 per run; $0.122 total across 2 runs for Config C, or $0.061 per run). Configuration A ran under a subscription plan that did not expose per-run dollar charges. In the appendix below, I include a separate sensitivity estimate showing what Configuration A's token volume would cost under hypothetical API pricing, but metered and imputed figures should not be read as identical measurements.
+
+These results informed my routing choices for the rest of this project. After Config C required repair loops and took more than twice as long as Config B on both probes, I stopped using Config C. I routed the stateful filesystem, concurrency, cancellation, and IPC tasks (such as DG-006 bottom-up tree aggregation, DG-007 cooperative cancellation, DG-012 Rayon parallel traversal, and DG-014 Tauri commands) to Config A, and assigned bounded modules, Criterion benchmarks, `proptest` suites, and initial React components (such as DG-008, DG-011, DG-013, and DG-015) to Config B.
 
 ---
 
-## 3. Benchmarking the Code: When Parallel NVMe Traversal Helps (and When It Hurts)
+## 3. Toolchain Differences Between Local Development and CI
 
-One of my favorite moments in the project came during Milestone 2 (`DG-012`).
+Every recorded run eventually passed local verification, but one recurring friction point had nothing to do with model reasoning: compiler version drift between my local machine and GitHub Actions.
 
-It's a common reflex in Rust to slap `rayon` onto a directory walker and assume 8 threads will be 8× faster than 1 thread. When we wrote `ADR-005` during the planning phase, we set an explicit empirical rule: **we would only switch the CLI default from `--threads 1` to parallel if a multi-threaded worker count achieved at least a `1.5×` speedup across all three canonical filesystem topologies** (wide trees, deep trees, and hard-link heavy trees).
+Local worktrees ran `rustc 1.85.0`, whereas the GitHub Actions Linux runner installed a newer stable toolchain (`rustc 1.99.0`). On DG-007 (cooperative cancellation and progress throttling), the agent wrote `entries_seen % 256 == 0` to check cancellation every 256 entries. That expression passed `cargo clippy --workspace --all-targets -- -D warnings` locally on 1.85.0, but failed in CI under `rustc 1.99.0`, which introduced the `clippy::manual_is_multiple_of` lint. Calling `.is_multiple_of(256)` was not an option either, because that method did not exist on `rustc 1.85.0`.
 
-First, we had to solve a subtle correctness bug that plagues naive parallel disk analyzers: **non-deterministic hard-link attribution**. If two directories share hard-linked files (`st_nlink > 1`), whichever thread visits an inode `(dev, ino)` first claims its byte size, while the second thread counts `0` bytes. If worker threads race, directory sizes jitter between runs!
+Switching power-of-two checks to a bitwise mask (`entries_seen & 255 == 0`) satisfied both compiler versions. The same local-versus-CI lint gap appeared again on DG-017 before I standardized the check. For future multi-agent repositories, pinning a `rust-toolchain.toml` file in the first commit is a simple way to keep local pre-flight checks aligned with CI.
 
-Our solution in `DG-012` was **parallel discovery with canonical lexicographical replay**:
-- Worker threads concurrently execute `read_dir` and `lstat`, sorting sibling entries per directory.
-- Results are replayed in deterministic depth-first order on the aggregator thread, guaranteeing that `ScanReport` outputs from `--threads 1`, `--threads 2`, `--threads 4`, and `--threads 8` are **100% identical** (verified across randomized trees by our `DG-013` `proptest` suite).
+---
 
-Then we ran our Criterion benchmark suite (`cargo bench -p diskgoblin-core`) on an Apple M2 Pro (10 cores, internal Apple AP0512Z NVMe SSD on APFS):
+## 4. Why Benchmark Results Led Us to Retain Sequential Traversal as the Default
 
-| Fixture Topology | 1 Thread (Sequential) | 2 Threads | 4 Threads | 8 Threads | Peak Speedup |
+When planning Milestone 2 (DG-012), I wanted to avoid assuming that adding Rayon threads automatically improves disk scanning across every directory shape. In ADR-005, I set an explicit threshold before any benchmark code was written: multi-threaded traversal would only replace `--threads 1` as the default if a parallel worker count achieved at least a 1.5x speedup across all three synthetic benchmark topologies (`wide_tree`, `deep_tree`, and `hardlink_cache_tree`) without correctness regressions.
+
+Parallelizing a hard-link-aware scanner also requires careful ordering. On Unix, when multiple directory entries share an inode (`st_nlink > 1`), DiskGoblin counts the physical blocks on the first encounter of `(dev, ino)` and attributes zero additional bytes to subsequent hard links. If worker threads aggregate directories in nondeterministic completion order, byte totals shift between folders from run to run.
+
+To keep parallel scans deterministic, the scanner in DG-012 uses Rayon workers to run `read_dir` and `lstat` in parallel and sort each directory's entries lexicographically, then replays the discovered tree in canonical depth-first order during aggregation. On our synthetic multi-branch fixtures and randomized `proptest` directory trees (DG-013), `--threads 1`, `--threads 2`, `--threads 4`, and `--threads 8` produced identical `ScanReport` structures once `duration_ms` was normalized.
+
+Running Criterion (`cargo bench -p diskgoblin-core --bench scanner_bench`) on an Apple M2 Pro (10 cores, 16 GB RAM, internal APFS NVMe SSD) produced these median timings:
+
+| Fixture Topology | 1 Thread (Sequential) | 2 Threads | 4 Threads | 8 Threads | Peak Speedup vs. 1 Thread |
 | :--- | ---: | ---: | ---: | ---: | :--- |
-| **`wide_tree`** *(50 sibling dirs × 200 files)* | `39.04 ms` | `23.53 ms` *(1.66×)* | `20.94 ms` *(1.86×)* | **`17.15 ms`** | **2.28×** *(at 8 threads)* |
-| **`deep_tree`** *(20 nested levels × 125 files)* | `11.36 ms` | `8.26 ms` *(1.38×)* | `8.27 ms` *(1.37×)* | **`8.16 ms`** | **1.39×** *(at 8 threads)* |
-| **`hardlink_cache_tree`** *(2k files + 3k hard links)* | `35.26 ms` | **`23.02 ms`** | `26.85 ms` *(1.31×)* | `24.36 ms` *(1.45×)* | **1.53×** *(at 2 threads)* |
+| **`wide_tree`** (50 dirs x 200 files, 10,000 files) | 39.037 ms | 23.532 ms (1.66x) | 20.935 ms (1.86x) | 17.145 ms (2.28x) | 2.28x at 8 threads |
+| **`deep_tree`** (20 nested levels x 125 files, 2,500 files) | 11.356 ms | 8.258 ms (1.38x) | 8.268 ms (1.37x) | 8.156 ms (1.39x) | 1.39x at 8 threads |
+| **`hardlink_cache_tree`** (2,000 files + 3,000 hard links) | 35.263 ms | 23.016 ms (1.53x) | 26.847 ms (1.31x) | 24.359 ms (1.45x) | 1.53x at 2 threads |
 
-Look closely at those three rows:
+The three topologies behaved very differently:
 
-- **Wide trees love parallelism (`2.28×` speedup):** With 50 independent sibling directories, 8 Rayon workers overlap `read_dir` and `lstat` syscalls across the NVMe queue, cutting scan time from `39.0 ms` to `17.1 ms`.
-- **Deep trees hit Amdahl's Law (`1.39×` speedup):** You cannot enumerate depth `d + 1` until you have discovered its parent directory at depth `d`. Adding more than 2 threads buys almost nothing (`8.26 ms` at 2 threads vs. `8.16 ms` at 8 threads).
-- **Hard-link heavy trees peak at 2 threads (`1.53×`) and *regress* at 4 threads (`1.31×`):** When thousands of directory entries point to shared inodes inside just two parent directories, throwing 4–8 concurrent `lstat` workers at the same directories creates APFS/VFS lock contention and scheduling overhead that outweighs the parallel I/O gain.
+- **Wide trees scaled well (2.28x at 8 threads):** With 50 sibling directories at the root, worker threads could overlap `read_dir` and `lstat` calls across independent subtrees, reducing median scan time from 39.037 ms to 17.145 ms.
+- **Deep chains hit serial dependency limits (1.39x peak):** Because depth `d + 1` cannot be opened until its parent directory at depth `d` is read, adding workers beyond 2 threads yielded negligible gains (8.258 ms at 2 threads vs. 8.156 ms at 8 threads).
+- **Hard-link-dense directories peaked at 2 threads (1.53x) and slowed down at 4 threads (1.31x):** In `hardlink_cache_tree`, 5,000 entries sit inside only two parent directories (`store/` and `links/`). A plausible explanation is that once more than two workers contend on metadata calls across a small number of parent directories, APFS/VFS lock contention and Rayon scheduling overhead outweigh the parallel I/O gain, though confirming the exact kernel bottleneck would require lock profiling beyond wall-clock Criterion timings.
 
-Because no single thread count cleared the `1.5×` bar across all three topologies, **the factory followed `ADR-005` and kept `--threads 1` as the honest CLI default**, while exposing `-j 0` (auto-parallel) and `-j N` for users scanning wide project trees. That is the kind of engineering discipline you only get when you bake empirical gates into your specifications.
-
----
-
-## 4. From Functional Prototype to Dark Native macOS Utility
-
-Our initial desktop milestones (`DG-014`–`DG-016`) produced a clean, tested React + D3 treemap and top-items table. But when we stepped back and used it against real directories, we noticed two things:
-1. We wanted the flexibility to run visual mode either straight from the terminal (`diskgoblin --ui /path`) **or** as a standalone native macOS application (`DiskGoblin.app`) with its own window and icon — without forcing a 350-crate GUI compile during headless CI tests.
-2. Visually and ergonomically, a disk utility needs high-contrast dark surfaces, stable item colors, and a strict separation between **whole-scan totals**, the **currently viewed folder**, and the **selected item inspector**.
-
-![DiskGoblin Native macOS App Interface](/diskgoblin-app.png)
-
-In two final passes (`DG-019` and `DG-020`), we used a structured **Architect Brief → Coding Brief → Visual Reference** workflow to ship:
-- **A 3-Tier Frontend Adapter (`ipc.ts`):** The exact same React UI automatically talks to native Tauri IPC when present, a zero-dependency Rust `std::net::TcpListener` bridge (`127.0.0.1`) in `--ui` and native WebKit mode, or a deterministic `/mock/home` fixture inside headless `vitest` runs.
-- **Scoped Immediate-Child Visualization:** Both the squarified treemap and the right-hand `Largest items` panel (`Folders` / `Files` tabs) scope strictly to the immediate children of the viewed folder, using the viewed folder's byte total as the bar denominator so percentages never lie or double-count descendants.
-- **Native macOS Packaging (`DiskGoblin.app`):** A lightweight Swift `AppKit` + `WKWebView` host wraps the Rust engine and production frontend bundle into a native macOS `.app` with native traffic-light window controls, custom `AppIcon.icns`, native Finder folder picking, and one-click **Reveal in Finder** (`open -R`).
+Because no single thread count cleared the 1.5x threshold across all three topologies, we followed ADR-005 and kept `--threads 1` as the default CLI setting while exposing `-j 0` (automatic thread pool) and `-j N` for wide directory trees.
 
 ---
 
-## Key Takeaways if You're Building Your Own Software Factory
+## 5. Turning the Functional Prototype into the Dark Desktop App
 
-1. **The spec and `AGENTS.md` are the product:** Agents amplify whatever structure is in the repository. When crate boundaries, read-only rules, allowed file scopes, and verification commands are explicit, agents regularly one-shot nontrivial Rust concurrency and UI tasks in 1–3 minutes.
-2. **Don't use a sledgehammer for every nail:** Pair a top-tier reasoning harness/model (`Codex CLI + gpt-6.1-sol`) for architecture, stateful I/O, and concurrency with a fast, penny-per-PR model (`OpenCode + deepseek-v4.1-flash`) for bounded modules, property tests, and UI work.
-3. **Measure your agents the same way you measure your code:** Adding `factory_eval` and JSON run records took one issue (`DG-017`), and it immediately paid for itself by showing us which model to retire (`glm-5.3-flash`), where our prompt cache hits were landing (`>92%`), and where local-vs-CI toolchain drift was costing us cycles.
+The initial UI tasks (DG-014 through DG-016) produced a working React and `d3-hierarchy` treemap backed by a Tauri 2 command layer in `apps/diskgoblin-desktop/src-tauri` (with native Tauri shell crates feature-gated in `Cargo.toml` so headless CI tests could compile the Rust command bindings without system GUI libraries).
 
-You can explore the full source code, ADRs, benchmark studies, and all 20+ agent telemetry records in the **[DiskGoblin repository on GitHub](https://github.com/RimCorp/DiskGoblin)**, or check out the **[DiskGoblin project page](/projects/diskgoblin)**. If you're looking to set up pragmatic agentic workflows or software factory pipelines for your own engineering team, [get in touch](/contact).
+When I ran that prototype against real folders, two practical gaps stood out: I wanted a way to launch the visual interface directly from the CLI (`diskgoblin --ui`) or as a standalone macOS app bundle without a heavy native build step, and the initial light-themed layout blurred the distinction between whole-scan totals, the currently viewed subfolder, and the selected item.
+
+<figure class="my-8">
+  <button
+    type="button"
+    class="group relative block w-full cursor-zoom-in rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+    aria-label="Enlarge DiskGoblin macOS desktop app screenshot"
+    aria-haspopup="dialog"
+    data-lightbox-src="/diskgoblin-app.png"
+    data-lightbox-alt="DiskGoblin macOS desktop app displaying a dark squarified treemap on the left, ranked child folders on the right, and an item inspector bar at the bottom"
+    data-lightbox-caption="DiskGoblin running as a macOS desktop app on a demonstration workspace, showing whole-scan totals at the top, immediate-child treemap tiles and ranked items in the center, and the item inspector below."
+  >
+    <img src="/diskgoblin-app.png" alt="DiskGoblin macOS desktop app displaying a dark squarified treemap on the left, ranked child folders on the right, and an item inspector bar at the bottom" class="w-full h-auto rounded-2xl shadow-md transition duration-200 group-hover:shadow-lg" loading="lazy" decoding="async" />
+    <span class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 group-hover:text-primary">
+      Click or press Enter to enlarge screenshot
+    </span>
+  </button>
+</figure>
+
+To close those gaps, I prepared a visual design reference and two follow-up specifications (DG-019 and DG-020):
+
+- **Three-tier frontend transport (`ipc.ts`):** The React frontend detects at runtime whether to call Tauri IPC, connect to the CLI's dependency-free `std::net::TcpListener` HTTP bridge on `127.0.0.1` (`diskgoblin --ui`), or fall back to an deterministic in-memory dataset during `vitest` component tests.
+- **`AppKit` and `WKWebView` macOS packaging (`DiskGoblin.app`):** A compact Swift host launches the bundled `diskgoblin-engine` binary on an ephemeral localhost port and renders the compiled React and `d3-hierarchy` frontend inside a dark `WKWebView` window, providing native macOS window management, folder selection, and Reveal in Finder (`open -R`) without implying that the workspace itself is built from native AppKit widgets.
+- **Scoped folder math and selection:** The top summary bar stays pinned to the root scan totals, while the treemap and the Largest items list (Folders and Files tabs) display only the immediate children of the viewed directory, using the viewed directory's byte total as the percentage denominator. Single-clicking inspects an item in the bottom bar; double-clicking navigates into a folder in memory.
+
+---
+
+## Practical Lessons
+
+1. **Put architectural invariants in executable gates, not chat instructions:** Encoding crate boundaries, `lstat`-only traversal, and formatting/Clippy checks in `AGENTS.md` and CI caught integration issues before code review.
+2. **Use small paired tasks to calibrate routing on your own repo:** Running two representative tasks across candidate configurations was enough to spot a poor fit early and decide how to split systems work and bounded module work for the rest of the backlog.
+3. **Separate agent active time from end-to-end engineering time:** Fast agent execution (median 1.8 to 2.6 active minutes on accepted tasks) only worked because I invested time up front in specifications, fixture design, and review.
+4. **Pin toolchains before running autonomous checks:** Aligning local and CI compiler versions avoids wasted repair cycles on newly introduced lints.
+
+For a closer look at DiskGoblin's features and execution modes, visit the **[DiskGoblin project page](/projects/diskgoblin)**. If you are exploring structured agent workflows for your own engineering team, you can read more on my **[services page](/services)** or **[get in touch](/contact)**.
+
+---
+
+<details class="mt-8 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
+<summary class="cursor-pointer font-semibold text-slate-900">Appendix: Telemetry Methodology, Cost Assumptions, and Cohort Summary Table</summary>
+
+### Scope of Recorded Telemetry
+
+The telemetry ledger (`docs/experiments/runs/*.json`) contains 20 schema-validated records covering 16 issues: DG-001 through DG-015 and DG-017. Four tasks (DG-004 and DG-005) include paired comparison runs across all three configurations (`16 + 4 = 20` runs). Later UI tasks (DG-016, DG-018, DG-019, and DG-020) were verified through the same test and build gates but were not logged in the 20-run comparative study.
+
+### Cohort Summary (`factory_eval`)
+
+| Harness | Provider / Model | Attempted | First-Pass % | Eventual % | Median Active Min | Mean Active Min | Cost Basis | Total Tokens Reported | Mean Repairs |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | :--- | ---: | ---: |
+| Codex CLI 0.166.0 | openai/gpt-6.1-sol | 9 | 88.9% | 100.0% | 1.8 | 2.4 | Subscription; per-run cost unavailable | 4,390,023 | 0.00 |
+| OpenCode v2.2.5 | openrouter/deepseek/deepseek-v4.1-flash-1017 | 9 | 88.9% | 100.0% | 2.6 | 2.6 | $0.030 metered mean ($0.274 total) | 764,569 uncached (+12,213,560 cached) | 0.11 |
+| OpenCode v2.2.5 | openrouter/z-ai/glm-5.3-flash | 2 | 0.0% | 100.0% | 4.8 | 4.8 | $0.061 metered mean ($0.122 total) | 373,618 uncached (+4,295,127 cached) | 1.00 |
+
+*(Note: In Configuration A, the single non-first-pass run was DG-002, where I clarified the `PathBuf` vs. `OsString` specification requirement mid-flight rather than an automated compile/test repair loop. In Configuration B, DG-003 required one self-repair iteration after an initial test failure.)*
+
+### Token Accounting and Cost Estimation Assumptions
+
+The two harnesses report input tokens differently:
+
+- **Codex CLI (Configuration A):** `tokens_input` (4,321,150 across 9 runs) includes `tokens_cached_input` (4,009,728, or 92.8% cache hit rate), leaving 311,422 uncached input tokens and 68,873 output tokens. Because Configuration A ran on a subscription account without per-run billing records and actual list tariffs were not archived in the telemetry logs, per-run dollar costs are marked unavailable. As an illustrative sensitivity calculation only, pricing 311,422 uncached input tokens at $1.00/M, 4,009,728 cached input tokens at $0.10/M, and 68,873 output tokens at $5.00/M yields an estimated $1.06 total ($0.117 per run).
+- **OpenCode (Configurations B and C):** `tokens_input` reports uncached input tokens separately from `tokens_cached_input`, and `estimated_cost_usd` records the metered OpenRouter API charge for each run.
+
+### Cancellation Latency Note
+
+Cooperative cancellation (`CancelToken`) was verified in automated integration tests to abort active scans within 100 ms on synthetic local filesystem fixtures by checking the atomic flag every 256 visited entries and before descending into subdirectories. Because standard POSIX `read_dir` and `lstat` calls are synchronous, cancellation cannot preempt an individual kernel syscall that is already blocked on an unresponsive network mount until that syscall returns.
+
+</details>

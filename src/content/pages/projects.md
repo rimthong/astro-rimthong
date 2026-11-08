@@ -20,7 +20,7 @@ I'm building **Rimcorp**, my consulting practice focused on agentic engineering 
 
 ## Open-source & software factory builds
 
-- **[DiskGoblin](/projects/diskgoblin)** — *See what's gobblin' your disk space — from the terminal to the treemap.* A strictly read-only, symlink-safe, hard-link deduplicated disk space analyzer written in Rust with a fast CLI, a zero-dependency localhost web bridge, and a dark native macOS desktop utility (`DiskGoblin.app`) built with React and `d3-hierarchy`. Just as importantly, it was built end-to-end as a controlled **autonomous software factory experiment** across 20+ agent runs, with a built-in telemetry evaluator (`factory_eval`) measuring model accuracy, speed, repair loops, and cost. *[Project page](/projects/diskgoblin) · [Read the factory & benchmark retrospective](/blog/building-diskgoblin-software-factory) · [GitHub](https://github.com/RimCorp/DiskGoblin)*
+- **[DiskGoblin](/projects/diskgoblin)**: *See what's gobblin' your disk space, from the terminal to the treemap.* A read-only, symlink-safe, hard-link-aware disk space analyzer written in Rust with a terminal CLI, a localhost browser view (`diskgoblin --ui`), and a macOS desktop app (`DiskGoblin.app`) wrapping a dark React and `d3-hierarchy` workspace in `AppKit` and `WKWebView`. I also built it as a structured coding-agent experiment with an in-repo telemetry evaluator (`factory_eval`) tracking run durations, repair loops, and costs. *[Project page](/projects/diskgoblin) · [Building DiskGoblin with Coding Agents](/blog/building-diskgoblin-software-factory)*
 
 ## Engineering agentic recipes
 

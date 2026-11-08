@@ -1,76 +1,57 @@
 ---
-title: DiskGoblin — Read-Only Disk Space Analyzer
+title: 'DiskGoblin: Read-Only Disk Space Analyzer'
 featureImage:
   src: '/diskgoblin-app.png'
-  alt: DiskGoblin dark native macOS desktop application showing an interactive squarified treemap and ranked directory list
-  caption: DiskGoblin running as a native macOS desktop utility — interactive squarified treemap on the left, immediate-child rankings on the right, and a Finder inspector below.
+  alt: 'DiskGoblin macOS desktop app displaying a dark squarified treemap on the left, ranked child folders on the right, and an item inspector bar at the bottom'
+  caption: 'DiskGoblin running as a macOS desktop app on a demonstration workspace, showing whole-scan totals at the top, immediate-child treemap tiles and ranked items in the center, and the item inspector below.'
 seo:
-  title: DiskGoblin — Rust Disk Space Analyzer & Software Factory Case Study
-  description: A strictly read-only, symlink-safe disk space analyzer in Rust with a fast CLI and dark native macOS treemap UI, built via an autonomous software factory.
+  title: 'DiskGoblin: Read-Only Disk Space Analyzer'
+  description: 'A read-only disk space analyzer for finding which folders and files occupy disk space from a desktop interface or the terminal.'
   image:
     src: '/diskgoblin-app.png'
 ---
 
-> **See what's gobblin' your disk space — from the terminal to the treemap.**
+**DiskGoblin** helps you see which folders and files are taking up disk space, using either a dark desktop interface or the terminal. It is strictly read-only, so you can inspect large project trees, caches, and media folders without risking accidental deletion or modification.
 
-**DiskGoblin** is a fast, strictly read-only disk usage analyzer written in Rust. It pairs a scriptable terminal CLI with an interactive dark desktop application built on React, TypeScript, `d3-hierarchy`, and a native macOS `WKWebView` / Tauri 2 architecture.
-
-Beyond being a daily-driver utility for inspecting bloated caches, build artifacts, and media folders, DiskGoblin was designed as a **production testbed for an autonomous software factory** — complete with an embedded telemetry evaluator (`factory_eval`) that audited every agent run from initial Cargo workspace setup to the final desktop UI.
-
-- **Source Code:** [github.com/RimCorp/DiskGoblin](https://github.com/RimCorp/DiskGoblin)
-- **Engineering Deep Dive:** [How We Built DiskGoblin: Running a Multi-Agent Software Factory (and What the Benchmarks Actually Showed)](/blog/building-diskgoblin-software-factory)
+Source code is currently private while I prepare it for release. For the story of how I built and benchmarked the project with coding agents, read **[Building DiskGoblin with Coding Agents](/blog/building-diskgoblin-software-factory)**.
 
 ---
 
-## What It Does
+## Features
 
-Most disk analyzers force a trade-off: either you get a fast terminal tool (`du`, `ncdu`) that's hard to visually parse across deep hierarchies, or a heavy GUI utility that wants full-disk deletion permissions and miscounts hard-linked package caches (`pnpm`, Git object stores, Time Machine snapshots).
-
-DiskGoblin solves both problems around four strict invariants:
-
-1. **Strictly Read-Only by Construction:** DiskGoblin never deletes, truncates, or mutates user files. It inspects filesystem metadata exclusively via `std::fs::symlink_metadata` (`lstat`) and never follows symbolic links into recursive cycles.
-2. **Dual Physical & Logical Accounting:** Every file and directory simultaneously tracks **physical disk allocation** (`st_blocks * 512` on Unix — accurate for sparse files and APFS/ext4 block allocation) and **logical apparent size** (`st_size`). In the desktop UI, toggling between `Allocated` and `Apparent` recomputes the entire treemap, rankings, and percentage bars in memory without rescanning the disk.
-3. **Hard-Link Deduplication:** Unix files with `st_nlink > 1` are tracked by `(dev, ino)` identity and counted once toward directory totals and top-file rankings, with deterministic lexicographical first-encounter attribution.
-4. **Deterministic Parallel Traversal:** When run with multiple worker threads (`-j 0` or `-j N`), a bounded Rayon worker pool overlaps directory enumeration and `lstat` syscalls, then replays sorted sibling trees in canonical depth-first order so totals, hard-link attribution, and top-K rankings are **bit-for-bit identical** to single-threaded runs.
+- **Read-only scanning:** DiskGoblin never deletes, truncates, or modifies scanned files. Traversal uses `std::fs::symlink_metadata` (`lstat`) so symbolic links are recorded without following them into directory cycles, and unreadable directories are logged as non-fatal scan errors rather than aborting the run.
+- **Allocated and apparent size views:** Every scan records both physical disk allocation and logical byte length (`st_size`). Switching between Allocated and Apparent in the toolbar updates the treemap, rankings, and percentage bars in memory without rescanning the disk. On Unix systems, physical allocation is calculated from `st_blocks * 512`; on non-Unix fallback builds, allocated size falls back to apparent byte length.
+- **Hard-link-aware accounting:** On Unix filesystems, files with `st_nlink > 1` are tracked by device and inode identity `(dev, ino)` and counted once toward directory totals and largest-file rankings. When parallel scanning (`-j N`) is enabled, discovered entries are replayed in canonical lexicographical order so first-encounter attribution matches single-threaded scans on the same directory state.
+- **Interactive treemap and ranked items:** The visual workspace pairs a squarified treemap with a ranked list of immediate child folders and files, letting you compare relative proportions visually or scan sorted byte totals side by side.
 
 ---
 
-## Three Ways to Run One Engine
+## Workspace Layout
 
-All three execution modes share the exact same pure-Rust `diskgoblin-core` scanning engine and a 3-tier frontend adapter (`ipc.ts`):
+The visual interface organizes scan data into three distinct regions so totals and percentages stay consistent as you drill into subdirectories:
 
-| Mode | Command | Best For |
+- **Whole-scan totals:** The top summary line keeps the root scan metrics visible (total bytes scanned, file count, folder count, and error count) even when you navigate deeper into the tree.
+- **Viewed-folder contents:** Both the treemap and the Largest items list (with Folders and Files tabs) show only the immediate children of the folder you are currently viewing. Each item's percentage bar uses the viewed folder's byte total as its denominator, avoiding double-counting nested descendants.
+- **Selected-item details:** Single-clicking a treemap tile or list row loads that item into the bottom inspector bar with its full path, measured size, and a Reveal in Finder action. Double-clicking a folder (or pressing Enter) navigates into it in memory without rescanning the filesystem.
+
+---
+
+## Execution Modes and Availability
+
+In the current codebase, three execution modes share the same Rust scanning engine and web frontend:
+
+| Mode | Command | Description |
 | :--- | :--- | :--- |
-| **1. Terminal CLI & JSON** | `diskgoblin /path --top 20` *(or `--json`)* | SSH sessions, shell pipelines (`jq`), CI artifact size checks |
-| **2. CLI Visual Bridge** | `diskgoblin --ui /path` | Launching an interactive treemap straight from the terminal over a zero-dependency `127.0.0.1` HTTP bridge |
-| **3. Native macOS App** | `open DiskGoblin.app` | Standalone dark desktop utility with native macOS window controls, folder picker dialog, and **Reveal in Finder** |
+| **Terminal CLI** | `diskgoblin /path --top 20` | Prints human-readable ASCII summary tables or versioned JSON (`--json`) for scripts and terminal sessions. |
+| **Browser Visual Mode** | `diskgoblin --ui /path` | Starts a localhost HTTP server on `127.0.0.1` and opens the dark React and `d3-hierarchy` interface in your default web browser. |
+| **macOS Desktop App** | `open DiskGoblin.app` | Packages the CLI engine and compiled web UI inside a lightweight `AppKit` and `WKWebView` macOS application window with native folder-picker and Finder integration. |
 
-### Designing the Dark Desktop Workspace
-
-The visual interface was designed around a clear five-part information model so numbers never silently change meaning as you explore:
-
-- **Whole-Scan Header Summary:** Always reports the root scan totals (`733 MiB scanned · 8 files · 14 folders · 0 errors`), keeping your global bearings while you drill into subdirectories.
-- **Immediate-Child Treemap & Ranked List:** Both the left-hand squarified treemap and the right-hand `Largest items` panel (`Folders` / `Files` tabs) are scoped to the **currently viewed folder**. Every percentage bar uses the viewed folder's total size as its denominator, eliminating descendant double-counting.
-- **Separate Selection vs. Navigation:** Single-clicking any tile or list row selects it into the bottom **Inspector Bar** (showing its full monospace path, measured size, and a one-click **Reveal in Finder** button). Double-clicking (or pressing `Enter`) drills into a folder instantaneously in memory without triggering a new filesystem scan.
+The repository also includes a Tauri 2 command backend under `apps/diskgoblin-desktop/src-tauri` that exposes the same scan, cancel, and progress IPC contract; its native shell dependencies are currently feature-gated in `Cargo.toml` while the `AppKit` and `WKWebView` bundle serves as the primary macOS desktop build. Public binaries and source releases are not yet published.
 
 ---
 
-## Architecture at a Glance
+## Architecture and How It Was Built
 
-The repository is structured as a strict boundary-enforced workspace:
+DiskGoblin is organized as a Rust and TypeScript workspace: `crates/diskgoblin-core` implements the platform metadata layer, sequential and Rayon parallel scanners, bottom-up tree aggregator, cooperative cancellation token, and JSON schema without CLI or GUI dependencies; `crates/diskgoblin-cli` provides the command-line binary and localhost `--ui` server; and `apps/diskgoblin-desktop` contains the React 18, TypeScript, and `d3-hierarchy` frontend along with the macOS packaging scripts.
 
-- **`crates/diskgoblin-core`:** Pure Rust library containing domain models, Unix/fallback metadata extraction, sequential and Rayon parallel scanners, bottom-up tree aggregation, cooperative `CancelToken` (`< 100 ms` cancellation latency), 50 ms throttled progress reporting, versioned JSON schema (`schema_version: 1`), and the `factory_metrics` telemetry validator. Zero CLI or GUI dependencies.
-- **`crates/diskgoblin-cli`:** Thin binary wrapper (`clap` argument parser, ASCII table renderer, `SIGINT` handler, dependency-free `std::net::TcpListener` `--ui` bridge) plus the `factory_eval` benchmark reporter.
-- **`apps/diskgoblin-desktop`:** React 18 + TypeScript + `d3-hierarchy` frontend paired with a `src-tauri` backend and a native macOS `AppKit` + `WKWebView` bundle builder (`npm run package:macos`).
-
----
-
-## Built by an Autonomous Software Factory
-
-DiskGoblin wasn't vibe-coded in an unstructured chat loop. Before a single line of Rust was written, we authored a complete engineering charter:
-
-- An execution contract ([`AGENTS.md`](https://github.com/RimCorp/DiskGoblin/blob/main/AGENTS.md)) enforcing scope containment, read-only safety, panic hygiene, and mandatory pre-PR quality gates (`cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`, `proptest`, and `vitest`).
-- **6 Architecture Decision Records (`ADR-001`–`ADR-006`)** locking down crate boundaries, `lstat` traversal, hard-link deduplication, cooperative cancellation, and the empirical benchmark threshold required to enable parallel traversal by default.
-- **18 atomic GitHub issues (`DG-001`–`DG-018`)** dispatched across isolated Git worktrees to multiple coding agents and models (**Codex CLI + `gpt-6.1-sol`**, **OpenCode + `deepseek-v4.1-flash-1017`**, and **OpenCode + `glm-5.3-flash`**).
-
-Want to see how the models stacked up against each other — and why our Criterion NVMe benchmarks convinced us to keep single-threaded traversal as the CLI default? **[Read the full engineering post here &rarr;](/blog/building-diskgoblin-software-factory)**
+I built DiskGoblin to test how coding agents perform when given upfront architecture boundaries, explicit file-scope rules, and automated verification gates, while logging run telemetry across 20 implementation tasks. Read the full retrospective and benchmark analysis in **[Building DiskGoblin with Coding Agents](/blog/building-diskgoblin-software-factory)**.
