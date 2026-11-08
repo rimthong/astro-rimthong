@@ -17,7 +17,7 @@ seo:
 
 I built **[DiskGoblin](/projects/diskgoblin)** to answer a practical question: how far can coding agents carry a systems and UI project when I give them explicit module boundaries, file-scope limits, and automated verification checks up front?
 
-DiskGoblin is a read-only disk space analyzer written in Rust with a React and `d3-hierarchy` visual interface. It runs either as a terminal CLI, in a local browser via `diskgoblin --ui`, or as a macOS desktop app (`DiskGoblin.app`) that hosts the web interface inside an `AppKit` and `WKWebView` window. Source code is currently private while I prepare it for release.
+DiskGoblin is a read-only disk space analyzer written in Rust with a React and `d3-hierarchy` visual interface. It runs either as a terminal CLI, in a local browser via `diskgoblin --ui`, or as a macOS desktop app (`DiskGoblin.app`) that hosts the web interface inside an `AppKit` and `WKWebView` window. The source code, ADRs, and benchmark records are available on **[GitHub](https://github.com/RimCorp/DiskGoblin)**.
 
 To keep track of how the agents actually performed, I included a small evaluation tool (`factory_eval`) in the workspace and logged JSON run records for 20 agent executions across 16 implementation tasks. Here is how I structured the project, where I had to step in, and what the agent telemetry and filesystem benchmarks showed.
 
