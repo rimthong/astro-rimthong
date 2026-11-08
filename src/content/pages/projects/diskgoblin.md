@@ -13,7 +13,8 @@ seo:
 
 **DiskGoblin** helps you see which folders and files are taking up disk space, using either a dark desktop interface or the terminal. It is strictly read-only, so you can inspect large project trees, caches, and media folders without risking accidental deletion or modification.
 
-Source code is currently private while I prepare it for release. For the story of how I built and benchmarked the project with coding agents, read **[Building DiskGoblin with Coding Agents](/blog/building-diskgoblin-software-factory)**.
+- **Source Code:** **[github.com/RimCorp/DiskGoblin](https://github.com/RimCorp/DiskGoblin)** (MIT License)
+- **Engineering Story:** **[Building DiskGoblin with Coding Agents](/blog/building-diskgoblin-software-factory)**
 
 ---
 

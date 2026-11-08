@@ -20,7 +20,7 @@ I'm building **Rimcorp**, my consulting practice focused on agentic engineering 
 
 ## Open-source & software factory builds
 
-- **[DiskGoblin](/projects/diskgoblin)**: *See what's gobblin' your disk space, from the terminal to the treemap.* A read-only, symlink-safe, hard-link-aware disk space analyzer written in Rust with a terminal CLI, a localhost browser view (`diskgoblin --ui`), and a macOS desktop app (`DiskGoblin.app`) wrapping a dark React and `d3-hierarchy` workspace in `AppKit` and `WKWebView`. I also built it as a structured coding-agent experiment with an in-repo telemetry evaluator (`factory_eval`) tracking run durations, repair loops, and costs. *[Project page](/projects/diskgoblin) · [Building DiskGoblin with Coding Agents](/blog/building-diskgoblin-software-factory)*
+- **[DiskGoblin](/projects/diskgoblin)**: *See what's gobblin' your disk space, from the terminal to the treemap.* A read-only, symlink-safe, hard-link-aware disk space analyzer written in Rust with a terminal CLI, a localhost browser view (`diskgoblin --ui`), and a macOS desktop app (`DiskGoblin.app`) wrapping a dark React and `d3-hierarchy` workspace in `AppKit` and `WKWebView`. I also built it as a structured coding-agent experiment with an in-repo telemetry evaluator (`factory_eval`) tracking run durations, repair loops, and costs. *[Project page](/projects/diskgoblin) · [Building DiskGoblin with Coding Agents](/blog/building-diskgoblin-software-factory) · [GitHub](https://github.com/RimCorp/DiskGoblin)*
 
 ## Engineering agentic recipes
 
