@@ -25,7 +25,7 @@ To keep track of how the agents actually performed, I included a small evaluatio
 
 ## 1. Defining Boundaries and Acceptance Criteria Before Implementation
 
-Before dispatching any implementation work, I wrote the architecture document, six Architecture Decision Records (ADRs), an agent operating contract (`AGENTS.md`), and dependency-ordered issue specs. Every issue defined the objective, the exact files the agent was allowed to create or modify, what was out of scope, and the verification commands required before opening a pull request:
+Rather than using a single agent for everything, I separated the **architect and orchestrator** role from the **implementation coding agents**. Working with Gemini Argon in Antigravity as the architect and orchestrator, I defined the architecture document, six Architecture Decision Records (ADRs), an agent operating contract (`AGENTS.md`), and dependency-ordered issue specs before dispatching any implementation work. Every issue defined the objective, the exact files the coding agent was allowed to create or modify, what was out of scope, and the verification commands required before opening a pull request:
 
 ```bash
 cargo fmt --all -- --check
@@ -46,11 +46,11 @@ Upfront specs reduced ambiguity, though they did not eliminate human design adju
 
 ## 2. What the Small Agent Experiment Suggested About Task Routing
 
-Across the first 16 recorded issues (DG-001 through DG-015, plus DG-017), I logged 20 agent runs across three harness and model configurations:
+While Gemini Argon handled orchestration, worktree setup, and gate verification, the implementation tasks themselves were dispatched to three coding-agent configurations across the first 16 recorded issues (DG-001 through DG-015, plus DG-017, for 20 total runs):
 
-- **Configuration A:** Codex CLI 0.166.0 with openai/gpt-6.1-sol (9 runs)
-- **Configuration B:** OpenCode v2.2.5 with openrouter/deepseek/deepseek-v4.1-flash-1017 (9 runs)
-- **Configuration C:** OpenCode v2.2.5 with openrouter/z-ai/glm-5.3-flash (2 runs)
+- **Configuration A (Harder systems & concurrency coding tasks):** Codex CLI 0.166.0 with openai/gpt-6.1-sol (9 runs)
+- **Configuration B (Bounded module, benchmark & UI coding tasks):** OpenCode v2.2.5 with openrouter/deepseek/deepseek-v4.1-flash-1017 (9 runs)
+- **Configuration C (Paired comparison probe):** OpenCode v2.2.5 with openrouter/z-ai/glm-5.3-flash (2 runs)
 
 To test all three configurations under matched conditions before routing the rest of the backlog, I ran two three-way comparisons from the same starting commits and specifications:
 
